@@ -5,7 +5,7 @@ import zipfile
 import os
 
 #on écrase le fichier précédemment créé
-fieldnames = ['GTFS_source','stop_id','stop_lat','stop_lon','stop_desc','stop_name','stop_code']
+fieldnames = ['source','stop_id','latitude','longitude','stop_name','stop_desc','stop_code']
 outfile = 'resultats/BATO_GTFS.csv'
 with open(outfile, 'w') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -30,7 +30,9 @@ with open('sources_GTFS.csv', 'r') as f:
                 stop_reader = csv.DictReader(g)
                 for a_stop in stop_reader:
                     if a_stop['location_type'] == '0' : #on ne conserve que les points d'arrêts
-                        a_stop['GTFS_source'] = a_GTFS['ID']
+                        a_stop['source'] = "opendata_GTFS_" + a_GTFS['ID']
+                        a_stop['longitude'] = a_stop['stop_lon']
+                        a_stop['latitude'] = a_stop['stop_lat']
                         stops_from_GTFS.append(a_stop)
 
 
