@@ -52,9 +52,9 @@ with open(outfile, 'a') as csvfile:
         writer.writerow(a_row)
 
 #on nettoie le répertoire courant
-#subprocess.call(['rm', 'france-latest.osm.pbf'])
-# subprocess.call(['rm', 'public_transport_stops.osm.pbf'])
-# subprocess.call(['rm', 'platform.osm.pbf'])
-# subprocess.call(['rm', 'bus.osm.pbf'])
-# subprocess.call(['rm', 'tram.osm.pbf'])
-#subprocess.call(['rm', 'BATO_OSM_full.csv'])
+subprocess.call(['rm', 'france-latest.osm.pbf'])
+subprocess.call(['rm', 'public_transport_stops.osm.pbf'])
+subprocess.call(['rm', 'platform.osm.pbf'])
+subprocess.call(['rm', 'bus.osm.pbf'])
+subprocess.call(['rm', 'tram.osm.pbf'])
+subprocess.call(['rm', 'BATO_OSM_full.csv'])
