@@ -9,5 +9,5 @@ Pour les extractions d'OpenStreetMap, les applicatifs suivants sont nécessaires
 * osmconvert
 
 ## Processus d'extraction
-![processus d'extraction des données](doc/factotum.svg)
-(généré avec factotum dot bato_update.factfile --output factotum.dot && dot -Tsvg factotum.dot -o factotum.svg)
+![processus d'extraction des données](doc/factotum.png)
+(généré avec factotum dot bato_update.factfile --output factotum.dot && dot -Tpng factotum.dot -o factotum.png)
