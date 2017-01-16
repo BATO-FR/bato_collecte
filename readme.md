@@ -10,4 +10,4 @@ Pour les extractions d'OpenStreetMap, les applicatifs suivants sont nécessaires
 
 ## Processus d'extraction
 ![processus d'extraction des données](doc/factotum.svg)
-(généré avec /factotum dot bato_update.factfile --output factotum.dot && dot -Tsvg factotum.dot -o factotum.svg)
+(généré avec factotum dot bato_update.factfile --output factotum.dot && dot -Tsvg factotum.dot -o factotum.svg)
