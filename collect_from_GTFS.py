@@ -19,7 +19,7 @@ with open('sources_GTFS.csv', 'r') as f:
             print(a_GTFS['Description'])
 
             #on télécharge le GTFS
-            subprocess.call(['wget', '--output-document=GTFS.zip', a_GTFS['Download']])
+            subprocess.call(['wget', '-nv', '--output-document=GTFS.zip', a_GTFS['Download']])
 
             stops_from_GTFS = []
 

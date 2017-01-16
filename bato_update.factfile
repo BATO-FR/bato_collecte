@@ -1,0 +1,129 @@
+{
+    "schema": "iglu:com.snowplowanalytics.factotum/factfile/jsonschema/1-0-0",
+    "data": {
+        "name": "Mise à jour des données de la BATO",
+        "tasks": [
+            {
+                "name": "téléchargement du fichier OSM France",
+                "executor": "shell",
+                "command": "wget 'http://download.geofabrik.de/europe/france-latest.osm.pbf' --no-verbose 2>&1",
+                "arguments": [],
+                "dependsOn": [],
+                "onResult": {
+                    "terminateJobWithSuccess": [ ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "filtre OSM sur public_transport",
+                "executor": "shell",
+                "command": "/home/pclf/app/osmosis/bin/osmosis --read-pbf file='france-latest.osm.pbf' --nkv keyValueList='public_transport.platform' --write-pbf platform.osm.pbf 2>&1",
+                "arguments": [],
+                "dependsOn": [ "téléchargement du fichier OSM France"],
+                "onResult": {
+                    "terminateJobWithSuccess": [ ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "filtre OSM sur bus stop",
+                "executor": "shell",
+                "command": "/home/pclf/app/osmosis/bin/osmosis --read-pbf file='france-latest.osm.pbf' --nkv keyValueList='highway.bus_stop' --write-pbf bus.osm.pbf 2>&1",
+                "arguments": [],
+                "dependsOn": [ "téléchargement du fichier OSM France"],
+                "onResult": {
+                    "terminateJobWithSuccess": [ ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "filtre OSM sur tram stop",
+                "executor": "shell",
+                "command": "/home/pclf/app/osmosis/bin/osmosis --read-pbf file='france-latest.osm.pbf' --nkv keyValueList='railway.tram_stop' --write-pbf tram.osm.pbf 2>&1",
+                "arguments": [],
+                "dependsOn": [ "téléchargement du fichier OSM France"],
+                "onResult": {
+                    "terminateJobWithSuccess": [ ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "fusion des filtres OSM",
+                "executor": "shell",
+                "command": "/home/pclf/app/osmosis/bin/osmosis --read-pbf platform.osm.pbf --read-pbf tram.osm.pbf --read-pbf bus.osm.pbf --merge --merge --write-pbf public_transport_stops.osm.pbf 2>&1",
+                "arguments": [],
+                "dependsOn": [ "filtre OSM sur tram stop", "filtre OSM sur bus stop", "filtre OSM sur public_transport"],
+                "onResult": {
+                    "terminateJobWithSuccess": [ ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "extraction OSM en csv",
+                "executor": "shell",
+                "command": "/home/pclf/app/osmconvert64 public_transport_stops.osm.pbf --csv='@oname @id @lat @lon name' --csv-headline --csv-separator=',' -o=BATO_OSM_full.csv 2>&1",
+                "arguments": [],
+                "dependsOn": ["fusion des filtres OSM"],
+                "onResult": {
+                    "terminateJobWithSuccess": [ ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "clean up OSM",
+                "executor": "shell",
+                "command": "python3 collect_from_OSM.py",
+                "arguments": [ ],
+                "dependsOn": ["extraction OSM en csv"],
+                "onResult": {
+                    "terminateJobWithSuccess": [ ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "mise à jour GTFS",
+                "executor": "shell",
+                "command": "python3 collect_from_GTFS.py 2>&1",
+                "arguments": [ ],
+                "dependsOn": [ ],
+                "onResult": {
+                    "terminateJobWithSuccess": [ 1 ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "check du nombre d'arrêts extraits des GTFS",
+                "executor": "shell",
+                "command": "sh check_line_number.sh",
+                "arguments": [ "resultats/BATO_GTFS.csv", "90000" ],
+                "dependsOn": [ "mise à jour GTFS" ],
+                "onResult": {
+                    "terminateJobWithSuccess": [ 1 ],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "fusion (prise en compte des résultats OSM)",
+                "executor": "shell",
+                "command": "cat resultats/BATO_OSM.csv > resultats/BATO.csv",
+                "arguments": [ ],
+                "dependsOn": [ "check du nombre d'arrêts extraits des GTFS", "clean up OSM" ],
+                "onResult": {
+                    "terminateJobWithSuccess": [],
+                    "continueJob": [ 0 ]
+                }
+            },
+            {
+                "name": "fusion (prise en compte des résultats GTFS)",
+                "executor": "shell",
+                "command": "cat resultats/BATO_GTFS.csv |sed 1d |cut -d , -f 1-5 >> resultats/BATO.csv",
+                "arguments": [ ],
+                "dependsOn": [ "fusion (prise en compte des résultats OSM)" ],
+                "onResult": {
+                    "terminateJobWithSuccess": [],
+                    "continueJob": [ 0 ]
+                }
+            }
+        ]
+    }
+}
