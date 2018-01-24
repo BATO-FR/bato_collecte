@@ -24,6 +24,6 @@ with open('BATO_OSM_full.csv', 'r') as g:
         stops_from_OSM.append(stop)
 
 with open(outfile, 'a') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC)
     for a_row in stops_from_OSM:
         writer.writerow(a_row)
