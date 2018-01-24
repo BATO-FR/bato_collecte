@@ -3,6 +3,8 @@ import csv
 import subprocess
 import zipfile
 import os
+import codecs
+import pandas as pd
 
 #on écrase le fichier précédemment créé
 fieldnames = ['source','stop_id','latitude','longitude','stop_name','stop_desc','stop_code']
@@ -15,35 +17,34 @@ with open(outfile, 'w') as csvfile:
 with open('sources_GTFS.csv', 'r') as f:
     dictReader = csv.DictReader(f)
     for a_GTFS in dictReader:
-        if a_GTFS['active'] == "yes":
-            print(a_GTFS['Description'])
+        #on télécharge le GTFS
+        subprocess.call(['wget', '-nv', '--output-document=GTFS.zip', a_GTFS['Download']])
 
-            #on télécharge le GTFS
-            subprocess.call(['wget', '-nv', '--output-document=GTFS.zip', a_GTFS['Download']])
+        #on extrait le fichier stops.txt de ce GTFS
+        stops_from_GTFS = []
+        with zipfile.ZipFile('GTFS.zip') as zf:
+            stops_file = zf.open('stops.txt')
+            stops_data = pd.read_csv(stops_file)
+            stops_data["location_type"] = stops_data["location_type"].fillna(0)
+            stops_count_before = len(stops_from_GTFS)
+            for a_stop in stops_data.iterrows():
+                if a_stop[1]['location_type'] == 0 : #on ne conserve que les points d'arrêts
+                    stop = {}
+                    stop['source'] = "opendata_GTFS_" + a_GTFS['ID']
+                    stop['stop_id'] = a_stop[1]['stop_id']
+                    stop['longitude'] = a_stop[1]['stop_lon']
+                    stop['latitude'] = a_stop[1]['stop_lat']
+                    stops_from_GTFS.append(stop)
+            print("{} : {} stops loaded ({})".format(
+                a_GTFS['ID'],
+                len(stops_from_GTFS) - stops_count_before,
+                a_GTFS['Description']
+            ))
+        #on supprime les fichiers temporaires
+        os.remove('GTFS.zip')
 
-            stops_from_GTFS = []
-
-            #on extrait le fichier stops.txt de ce GTFS
-            zf = zipfile.ZipFile('GTFS.zip')
-            zf.extract('stops.txt')
-            with open('stops.txt', 'r') as g:
-                stop_reader = csv.DictReader(g)
-                for a_stop in stop_reader:
-                    if a_stop['location_type'] == '0' : #on ne conserve que les points d'arrêts
-                        a_stop['source'] = "opendata_GTFS_" + a_GTFS['ID']
-                        a_stop['longitude'] = a_stop['stop_lon']
-                        a_stop['latitude'] = a_stop['stop_lat']
-                        stops_from_GTFS.append(a_stop)
-
-
-            #on persiste les infos (en csv par exemple)
-
-            stop_to_persist = [ dict((k,  stop.get(k, None)) for k in fieldnames) for stop in stops_from_GTFS]
-            with open(outfile, 'a') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                for a_row in stop_to_persist:
-                    writer.writerow(a_row)
-
-            #on supprime les fichiers temporaires
-            subprocess.call(['rm', 'GTFS.zip'])
-            subprocess.call(['rm', 'stops.txt'])
+        #on persiste les infos (en csv par exemple)
+        with open(outfile, 'a') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            for a_row in stops_from_GTFS:
+                writer.writerow(a_row)
