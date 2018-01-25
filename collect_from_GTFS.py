@@ -7,7 +7,7 @@ import codecs
 import pandas as pd
 
 #on écrase le fichier précédemment créé
-fieldnames = ['source','stop_id','latitude','longitude','stop_name','stop_desc','stop_code']
+fieldnames = ['source','stop_id','latitude','longitude','stop_name']
 outfile = 'resultats/BATO_GTFS.csv'
 with open(outfile, 'w') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -34,6 +34,7 @@ with open('sources_GTFS.csv', 'r') as f:
                     stop['stop_id'] = a_stop[1]['stop_id']
                     stop['longitude'] = a_stop[1]['stop_lon']
                     stop['latitude'] = a_stop[1]['stop_lat']
+                    stop['stop_name'] = a_stop[1]['stop_name']
                     stops_from_GTFS.append(stop)
             print("{} : {} stops loaded ({})".format(
                 a_GTFS['ID'],
@@ -45,6 +46,6 @@ with open('sources_GTFS.csv', 'r') as f:
 
         #on persiste les infos (en csv par exemple)
         with open(outfile, 'a') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC)
             for a_row in stops_from_GTFS:
                 writer.writerow(a_row)
